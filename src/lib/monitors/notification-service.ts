@@ -506,7 +506,16 @@ export async function sendWebhookNotification(
     // 根据Content-Type处理请求体
     if (contentType === 'application/json') {
       try {
-        requestBody = JSON.parse(body);
+        let jsonBody = body;
+        // 去除尾部逗号等常见JSON格式问题
+        jsonBody = jsonBody.replace(/,\s*([}\]])/g, '$1');
+        const parsed = JSON.parse(jsonBody);
+        if (typeof parsed === 'object' && parsed !== null) {
+          requestBody = parsed;
+        } else {
+          console.warn('JSON模板解析结果不是对象，尝试包装为对象');
+          requestBody = body;
+        }
       } catch (error) {
         console.error('自定义JSON模板解析失败，使用原始字符串:', error);
         console.error('原始模板:', body);
